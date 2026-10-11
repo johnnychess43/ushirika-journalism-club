@@ -307,7 +307,7 @@ def login():
     return render_template("login.html")
 
 
-@app.get("/logout")
+@app.post("/logout")
 @login_required
 def logout():
     logout_user()
@@ -323,6 +323,7 @@ def dashboard():
         flash("Your account is awaiting approval or has been disabled.", "warning")
         return redirect(url_for("login"))
     pending_articles = Article.query.filter_by(status="pending").count() if current_user.role in {"developer", "chief_editor", "patron", "assistant_patron"} else 0
+    pending_article_items = Article.query.filter_by(status="pending").order_by(Article.created_at.desc()).all() if current_user.role in {"developer", "chief_editor", "patron", "assistant_patron"} else []
     users_pending = User.query.filter_by(approved=False).count() if current_user.role == "developer" else 0
     return render_template("dashboard.html", pending_articles=pending_articles, pending_article_items=pending_article_items, users_pending=users_pending)
 
