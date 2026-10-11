@@ -3,3 +3,9 @@
 .env
 .env.*
 node_modules/
+
+__pycache__/
+*.py[cod]
+instance/
+.pytest_cache/
+.venv/
