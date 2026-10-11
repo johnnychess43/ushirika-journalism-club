@@ -262,10 +262,16 @@ def register():
         confirm = request.form.get("confirm_password", "")
         normalized = " ".join(name.lower().split())
         developer_emails = {"kapeloeddybrowse@gmail.com", "411228-2026@student.cuk.ac.ke"}
+        # Any valid personal email is accepted; CUK student addresses are accepted too.
         valid_email = (
             email in developer_emails
-            or (email.endswith("@student.cuk.ac.ke") and bool(email.split("@", 1)[0]))
-            or (email.endswith("@domain.com") and bool(email.split("@", 1)[0]))
+            or (
+                email.count("@") == 1
+                and bool(email.split("@", 1)[0])
+                and "." in email.split("@", 1)[1]
+                and not email.split("@", 1)[1].startswith(".")
+                and not email.split("@", 1)[1].endswith(".")
+            )
         )
         if not name or not valid_email or role not in ROLES or role == "developer":
             flash("Use your personal email (username@domain.com) or CUK student email (username@student.cuk.ac.ke), and choose a valid club role.", "danger")
