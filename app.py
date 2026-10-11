@@ -25,7 +25,7 @@ for folder in (INSTANCE_DIR, UPLOAD_DIR, GALLERY_DIR, DOCS_DIR):
 app = Flask(__name__, instance_path=str(INSTANCE_DIR), instance_relative_config=True)
 app.config.update(
     SECRET_KEY=os.environ.get("SECRET_KEY") or secrets.token_hex(32),
-    SQLALCHEMY_DATABASE_URI=os.environ.get("DATABASE_URL", "sqlite:///" + str(INSTANCE_DIR / "ushirika.db")).replace("postgres://", "postgresql://", 1),
+    SQLALCHEMY_DATABASE_URI=os.environ.get("DATABASE_URL", "sqlite:///" + str(INSTANCE_DIR / "ushirika.db")).replace("postgres://", "postgresql://", 1).replace("postgresql://", "postgresql+psycopg://", 1),
     SQLALCHEMY_TRACK_MODIFICATIONS=False,
     MAX_CONTENT_LENGTH=16 * 1024 * 1024,
     SESSION_COOKIE_HTTPONLY=True,
@@ -324,7 +324,7 @@ def dashboard():
         return redirect(url_for("login"))
     pending_articles = Article.query.filter_by(status="pending").count() if current_user.role in {"developer", "chief_editor", "patron", "assistant_patron"} else 0
     users_pending = User.query.filter_by(approved=False).count() if current_user.role == "developer" else 0
-    return render_template("dashboard.html", pending_articles=pending_articles, users_pending=users_pending)
+    return render_template("dashboard.html", pending_articles=pending_articles, pending_article_items=pending_article_items, users_pending=users_pending)
 
 
 @app.route("/dashboard/articles/new", methods=["GET", "POST"])
