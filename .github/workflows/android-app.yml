@@ -5,6 +5,7 @@ on:
   push:
     paths:
       - "android-app/**"
+      - "CUK-logo.png"
       - ".github/workflows/android-app.yml"
 
 permissions:
@@ -41,11 +42,12 @@ jobs:
         run: |
           echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/ushirika-upload.jks"
           echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/ushirika-upload.jks" >> "$GITHUB_ENV"
-      - name: Download official CUK logo artwork
+      - name: Use the repository's CUK logo as the app icon
         run: |
           mkdir -p app/src/main/res/drawable
-          curl --fail --location --silent --show-error "https://pbs.twimg.com/profile_images/1647883226495475712/0Ze5fN2s_400x400.jpg" -o app/src/main/res/drawable/cuk_logo.jpg
-          test -s app/src/main/res/drawable/cuk_logo.jpg
+          test -s ../CUK-logo.png
+          cp ../CUK-logo.png app/src/main/res/drawable/cuk_logo.png
+          file app/src/main/res/drawable/cuk_logo.png
       - name: Build debug APK
         run: gradle assembleDebug
       - name: Build release Android App Bundle
