@@ -720,6 +720,11 @@ def bootstrap_developer():
         return
     existing = User.query.filter_by(role="developer").first()
     if existing:
+        # Deployment secrets can rotate the developer password without storing it in source control.
+        existing.set_password(password)
+        existing.approved = True
+        existing.active = True
+        db.session.commit()
         return
     admin = User(full_name=name, email=email, role="developer", approved=True, active=True)
     admin.set_password(password)
