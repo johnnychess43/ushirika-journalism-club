@@ -41,6 +41,11 @@ jobs:
         run: |
           echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/ushirika-upload.jks"
           echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/ushirika-upload.jks" >> "$GITHUB_ENV"
+      - name: Download official CUK logo artwork
+        run: |
+          mkdir -p app/src/main/res/drawable
+          curl --fail --location --silent --show-error "https://pbs.twimg.com/profile_images/1647883226495475712/0Ze5fN2s_400x400.jpg" -o app/src/main/res/drawable/cuk_logo.jpg
+          test -s app/src/main/res/drawable/cuk_logo.jpg
       - name: Build debug APK
         run: gradle assembleDebug
       - name: Build release Android App Bundle
