@@ -307,6 +307,52 @@ def login():
     return render_template("login.html")
 
 
+
+@app.route("/patron-centre", methods=["GET", "POST"])
+def patron_centre():
+    allowed_roles = {"patron", "assistant_patron"}
+    if current_user.is_authenticated:
+        if current_user.approved and current_user.role in allowed_roles:
+            return redirect(url_for("dashboard"))
+        flash("The Patron Centre is only for approved Patron and Assistant Patron accounts.", "warning")
+        return redirect(url_for("login"))
+    if request.method == "POST":
+        email = request.form.get("email", "").strip().lower()
+        password = request.form.get("password", "")
+        user = User.query.filter_by(email=email, active=True).first()
+        if user and user.check_password(password) and user.role in allowed_roles and user.approved:
+            login_user(user, remember=False, fresh=True)
+            return redirect(url_for("dashboard"))
+        flash("Invalid Patron Centre credentials, or the account has not been approved.", "danger")
+    return render_template("patron_login.html")
+
+
+@app.route("/dashboard/social-links", methods=["GET", "POST"])
+@role_required("developer", "communication_manager")
+def social_links():
+    fields = {
+        "social_instagram": "Instagram profile or group URL",
+        "social_facebook": "Facebook page or group URL",
+        "social_tiktok": "TikTok profile URL",
+        "social_youtube": "YouTube channel URL",
+    }
+    if request.method == "POST":
+        values = {key: request.form.get(key, "").strip() for key in fields}
+        if any(value and not value.startswith("https://") for value in values.values()):
+            flash("Social links must start with https://.", "danger")
+            return render_template("social_links.html", fields=fields)
+        for key, value in values.items():
+            item = db.session.get(SiteSetting, key)
+            if item is None:
+                db.session.add(SiteSetting(key=key, value=value))
+            else:
+                item.value = value
+        db.session.commit()
+        flash("Social media links saved. This updates the website links; posting on external platforms still requires access to those platforms.", "success")
+        return redirect(url_for("social_links"))
+    return render_template("social_links.html", fields=fields)
+
+
 @app.post("/logout")
 @login_required
 def logout():
