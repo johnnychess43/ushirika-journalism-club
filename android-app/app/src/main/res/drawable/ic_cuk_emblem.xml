@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path android:fillColor="#FFFFFF" android:pathData="M0,0h108v108h-108z"/>
+    <!-- Blue laurel wreath -->
+    <path android:fillColor="#174A8B" android:pathData="M22,79 C9,64 10,43 24,26 L29,31 C18,45 18,62 29,74 Z"/>
+    <path android:fillColor="#174A8B" android:pathData="M86,79 C99,64 98,43 84,26 L79,31 C90,45 90,62 79,74 Z"/>
+    <path android:fillColor="#174A8B" android:pathData="M23,30 l-7,-8 11,2z M17,42 l-9,-6 11,0z M16,54 l-10,-3 10,-4z M20,66 l-9,1 7,-8z M27,76 l-7,5 3,-10z"/>
+    <path android:fillColor="#174A8B" android:pathData="M85,30 l7,-8 -11,2z M91,42 l9,-6 -11,0z M92,54 l10,-3 -10,-4z M88,66 l9,1 -7,-8z M81,76 l7,5 -3,-10z"/>
+    <!-- Three cooperative members -->
+    <path android:fillColor="#174A8B" android:pathData="M29,25a6,6 0,1 0,12 0a6,6 0,1 0,-12 0 M48,19a7,7 0,1 0,14 0a7,7 0,1 0,-14 0 M67,25a6,6 0,1 0,12 0a6,6 0,1 0,-12 0"/>
+    <path android:fillColor="#F58220" android:pathData="M28,34 Q54,23 80,34 L77,61 Q54,72 31,61 Z"/>
+    <path android:fillColor="#FFFFFF" android:pathData="M25,62 Q39,57 52,69 L52,82 Q38,71 25,76 Z M83,62 Q69,57 56,69 L56,82 Q70,71 83,76 Z"/>
+    <path android:fillColor="#174A8B" android:pathData="M25,62 Q39,57 52,69 L52,73 Q38,62 25,67 Z M83,62 Q69,57 56,69 L56,73 Q70,62 83,67 Z M52,69h4v14h-4z"/>
+    <!-- Green motto ribbon -->
+    <path android:fillColor="#178448" android:pathData="M17,87 L29,83 L79,83 L91,87 L84,94 L24,94 Z"/>
+</vector>
