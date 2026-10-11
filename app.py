@@ -261,8 +261,14 @@ def register():
         password = request.form.get("password", "")
         confirm = request.form.get("confirm_password", "")
         normalized = " ".join(name.lower().split())
-        if not name or not email or role not in ROLES or role == "developer":
-            flash("Please provide your name, email and a valid club role.", "danger")
+        developer_emails = {"kapeloeddybrowse@gmail.com", "411228-2026@student.cuk.ac.ke"}
+        valid_email = (
+            email in developer_emails
+            or (email.endswith("@student.cuk.ac.ke") and bool(email.split("@", 1)[0]))
+            or (email.endswith("@domain.com") and bool(email.split("@", 1)[0]))
+        )
+        if not name or not valid_email or role not in ROLES or role == "developer":
+            flash("Use your personal email (username@domain.com) or CUK student email (username@student.cuk.ac.ke), and choose a valid club role.", "danger")
         elif len(password) < 12:
             flash("Use a password with at least 12 characters.", "danger")
         elif password != confirm:
@@ -294,7 +300,11 @@ def login():
     if request.method == "POST":
         email = request.form.get("email", "").strip().lower()
         password = request.form.get("password", "")
+        developer_emails = {"kapeloeddybrowse@gmail.com", "411228-2026@student.cuk.ac.ke"}
         user = User.query.filter_by(email=email, active=True).first()
+        # Both developer contact addresses can sign in to the same developer account.
+        if user is None and email in developer_emails:
+            user = User.query.filter_by(role="developer", active=True).first()
         if user and user.check_password(password):
             if not user.approved:
                 flash("Your account is awaiting developer approval.", "warning")
@@ -703,7 +713,7 @@ def not_found(_error):
 
 def bootstrap_developer():
     """Create the first developer account only from deployment environment secrets."""
-    email = os.environ.get("BOOTSTRAP_ADMIN_EMAIL", "").strip().lower()
+    email = os.environ.get("BOOTSTRAP_ADMIN_EMAIL", "kapeloeddybrowse@gmail.com").strip().lower()
     name = os.environ.get("BOOTSTRAP_ADMIN_NAME", "John Chesiro Cheptai").strip()
     password = os.environ.get("BOOTSTRAP_ADMIN_PASSWORD", "")
     if not email or not password:
