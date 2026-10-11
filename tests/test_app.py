@@ -91,6 +91,7 @@ def test_developer_tools_are_restricted(client):
     login(client, "chair@example.test", "chair-password-long-enough")
     response = client.get("/admin/users")
     assert response.status_code == 403
+    client.post("/logout")
     login(client, "dev@example.test", "test-password-long-enough")
     response = client.get("/admin/users")
     assert response.status_code == 200
