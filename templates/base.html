@@ -26,7 +26,7 @@ header.nav{min-height:82px;display:flex;align-items:center;justify-content:space
 <a class="brand" href="{{ url_for('home') }}"><img src="{{ url_for('cuk_logo') }}" alt="Co-operative University of Kenya logo"><span>Ushirika Journalism Club<small>Learn · Report · Connect</small></span></a>
 <nav class="links" aria-label="Main navigation">
 <a href="{{ url_for('home') }}#about">About</a><a href="{{ url_for('home') }}#programmes">Our work</a><a href="{{ url_for('events') }}">News &amp; notices</a><a href="{{ url_for('gallery') }}">Gallery</a><a href="{{ url_for('articles') }}">Articles</a><a href="{{ url_for('register') }}">Registration</a><a href="{{ url_for('payment') }}">Payment</a>
-{% if current_user.is_authenticated %}<a class="btn blue" href="{{ url_for('dashboard') }}">My dashboard</a><a href="{{ url_for('logout') }}">Sign out</a>{% else %}<a href="{{ url_for('login') }}">Sign in</a>{% endif %}
+{% if current_user.is_authenticated %}<a class="btn blue" href="{{ url_for('dashboard') }}">My dashboard</a><form method="post" action="{{ url_for('logout') }}" style="display:inline"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button type="submit" style="background:none;border:0;color:inherit;cursor:pointer;font:inherit">Sign out</button></form>{% else %}<a href="{{ url_for('login') }}">Sign in</a>{% endif %}
 </nav></header>
 <main class="wrap" style="min-height:40vh">
 {% with messages = get_flashed_messages(with_categories=true) %}{% if messages %}{% for category,message in messages %}<div class="alert {{ category }}">{{ message }}</div>{% endfor %}{% endif %}{% endwith %}
