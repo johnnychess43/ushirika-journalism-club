@@ -19,7 +19,12 @@ Google Play requires a properly signed release Android App Bundle (AAB), store l
 
 Before a public release:
 - Create an Android upload keystore and keep a secure backup.
-- Configure GitHub Actions repository secrets for signing; never commit the keystore or passwords.
+- In **Settings → Secrets and variables → Actions**, add these repository secrets:
+  - `ANDROID_KEYSTORE_BASE64`: the upload keystore file encoded as Base64
+  - `ANDROID_KEYSTORE_PASSWORD`: keystore password
+  - `ANDROID_KEY_ALIAS`: upload key alias
+  - `ANDROID_KEY_PASSWORD`: upload key password
+- Never commit the keystore or passwords. If signing secrets are absent, the workflow's AAB is unsigned and cannot be uploaded to Play Console.
 - Review the app's privacy policy and ensure it accurately describes account data, uploaded media and payment-related data.
 - Test login, registration, uploads, logout, external links and different screen sizes on real devices.
 - Complete the Google Play Console developer registration and app review process.
