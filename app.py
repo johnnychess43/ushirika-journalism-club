@@ -58,7 +58,7 @@ ASSISTANT_PATRON_NAMES = {"meshack m.ngangi", "meshack m. ngangi", "meshack m.ng
 TREASURER_NAME = "john chesiro cheptai"
 IMAGE_EXTENSIONS = {"png", "jpg", "jpeg", "webp", "gif"}
 DOC_EXTENSIONS = {"csv", "xlsx", "pptx", "accdb", "pbix", "pdf", "docx"}
-PAYMENT_NUMBER = os.environ.get("MPESA_PAYBILL_OR_TILL", "0140415653")
+PAYMENT_NUMBER = os.environ.get("MPESA_RECIPIENT_NUMBER", "0140415653")
 
 
 def allowed_file(filename, extensions):
