@@ -702,6 +702,19 @@ def delete_content(kind, item_id):
     flash("Content item deleted.", "success")
     return redirect(url_for("admin_content"))
 
+@app.get("/manifest.webmanifest")
+def pwa_manifest():
+    return send_from_directory(BASE_DIR / "static", "manifest.webmanifest", mimetype="application/manifest+json")
+
+
+@app.get("/service-worker.js")
+def service_worker():
+    response = send_from_directory(BASE_DIR / "static", "service-worker.js", mimetype="application/javascript")
+    response.headers["Service-Worker-Allowed"] = "/"
+    response.headers["Cache-Control"] = "no-cache"
+    return response
+
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
