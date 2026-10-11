@@ -124,14 +124,33 @@ p,h1,h2,h3,h4,td,th,a,small,label{overflow-wrap:anywhere}
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
 }
 
+
+/* Keep the club name visible on narrow screens; tagline is secondary text. */
+.brand-copy{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;min-width:0;line-height:1.15}
+.brand-title{display:block;font-size:inherit;font-weight:700;line-height:1.15;white-space:normal;overflow-wrap:anywhere}
+.brand-copy small{display:block;line-height:1.2}
+.links>a[aria-label="Home page"]{font-weight:700}
+@media(max-width:580px){
+  .brand{flex:1 1 auto;max-width:calc(100% - 82px);min-width:0}
+  .brand-copy{flex:1 1 auto;min-width:0}
+  .brand-title{font-size:12px;letter-spacing:-.02em}
+  .brand-copy small{font-size:8px;letter-spacing:.025em}
+}
+@media(max-width:360px){
+  .brand{max-width:calc(100% - 76px)}
+  .brand-title{font-size:11px}
+  .brand-copy small{font-size:7px;letter-spacing:0}
+}
+
 </style>
 {% block head %}{% endblock %}
 </head>
 <body>
 <div class="topline"><div class="wrap"><span>Independent voices. Stronger communities.</span><span>Ushirika Journalism Club · CUK, Kenya</span></div></div>
 <header class="wrap nav">
-<a class="brand" href="{{ url_for('home') }}"><img src="{{ url_for('cuk_logo') }}" alt="Co-operative University of Kenya logo"><span>Ushirika Journalism Club<small>Learn · Report · Connect</small></span></a>
+<a class="brand" href="{{ url_for('home') }}" aria-label="Ushirika Journalism Club home"><img src="{{ url_for('cuk_logo') }}" alt="Co-operative University of Kenya logo"><span class="brand-copy"><span class="brand-title">Ushirika Journalism Club</span><small>Learn · Report · Connect</small></span></a>
 <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="main-navigation">☰ Menu</button><nav class="links" id="main-navigation" aria-label="Main navigation">
+<a href="{{ url_for('home') }}" aria-label="Home page">⌂ Home</a>
 <a href="{{ url_for('home') }}#about">About</a><a href="{{ url_for('home') }}#programmes">Our work</a><a href="{{ url_for('events') }}">News &amp; notices</a><a href="{{ url_for('gallery') }}">Gallery</a><a href="{{ url_for('articles') }}">Articles</a><a href="{{ url_for('forums') }}">Forums</a><a href="{{ url_for('register') }}">Registration</a><a href="{{ url_for('payment') }}">Payment</a><a href="{{ url_for('patron_centre') }}">Patron Centre</a>
 {% if current_user.is_authenticated %}<a class="btn blue" href="{{ url_for('dashboard') }}">My dashboard</a><form method="post" action="{{ url_for('logout') }}" style="display:inline"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button type="submit" style="background:none;border:0;color:inherit;cursor:pointer;font:inherit">Sign out</button></form>{% else %}<a href="{{ url_for('login') }}">Sign in</a>{% endif %}<button class="install-nav" id="open-install-options" type="button" aria-haspopup="dialog">Install app</button>
 </nav></header>
