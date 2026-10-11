@@ -578,6 +578,68 @@ def disable_user(user_id):
     return redirect(url_for("admin_users"))
 
 
+
+@app.route("/admin/settings", methods=["GET", "POST"])
+@role_required("developer")
+def admin_settings():
+    fields = {
+        "hero_title": "Homepage headline",
+        "hero_text": "Homepage introduction",
+        "about_text": "About the club",
+        "contact_email": "Public club contact email",
+    }
+    if request.method == "POST":
+        for key in fields:
+            value = request.form.get(key, "").strip()
+            item = db.session.get(SiteSetting, key)
+            if item is None:
+                item = SiteSetting(key=key, value=value)
+                db.session.add(item)
+            else:
+                item.value = value
+        db.session.commit()
+        flash("Website content settings saved.", "success")
+        return redirect(url_for("admin_settings"))
+    return render_template("admin_settings.html", fields=fields)
+
+
+@app.get("/admin/content")
+@role_required("developer")
+def admin_content():
+    return render_template(
+        "admin_content.html",
+        articles=Article.query.order_by(Article.created_at.desc()).all(),
+        events=ClubEvent.query.order_by(ClubEvent.created_at.desc()).all(),
+        forums=ForumPost.query.order_by(ForumPost.created_at.desc()).all(),
+        minutes=MeetingMinute.query.order_by(MeetingMinute.created_at.desc()).all(),
+        photos=GalleryPhoto.query.order_by(GalleryPhoto.created_at.desc()).all(),
+    )
+
+
+@app.post("/admin/content/<string:kind>/<int:item_id>/delete")
+@role_required("developer")
+def delete_content(kind, item_id):
+    models = {
+        "article": Article,
+        "event": ClubEvent,
+        "forum": ForumPost,
+        "minutes": MeetingMinute,
+        "photo": GalleryPhoto,
+    }
+    model = models.get(kind)
+    if model is None:
+        abort(404)
+    item = db.session.get(model, item_id) or abort(404)
+    if kind == "photo":
+        try:
+            (GALLERY_DIR / item.filename).unlink(missing_ok=True)
+        except OSError:
+            app.logger.warning("Could not remove gallery file %s", item.filename)
+    db.session.delete(item)
+    db.session.commit()
+    flash("Content item deleted.", "success")
+    return redirect(url_for("admin_content"))
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
