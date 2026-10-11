@@ -329,7 +329,7 @@ def dashboard():
 
 
 @app.route("/dashboard/articles/new", methods=["GET", "POST"])
-@role_required("developer", "patron", "assistant_patron", "chairperson", "vice_chairperson", "secretary_general", "production_manager", "chief_editor", "communication_manager")
+@role_required("developer", "patron", "assistant_patron", "chairperson", "vice_chairperson", "secretary_general", "treasurer", "production_manager", "chief_editor", "communication_manager")
 def new_article():
     if request.method == "POST":
         title = request.form.get("title", "").strip()
