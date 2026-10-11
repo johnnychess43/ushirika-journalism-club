@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="108" fill="#0033ff"/>
+  <circle cx="256" cy="218" r="132" fill="#ffffff" opacity=".10"/>
+  <path d="M132 147h248v36H132zM132 210h190v30H132zM132 266h218v30H132z" fill="#ffffff"/>
+  <path d="M132 322h150v30H132z" fill="#ff6600"/>
+  <path d="M338 252l64 64-64 64-24-24 40-40-40-40z" fill="#ff6600"/>
+  <text x="256" y="425" text-anchor="middle" font-family="Arial,sans-serif" font-size="46" font-weight="700" fill="#ffffff">USHIRIKA</text>
+</svg>
