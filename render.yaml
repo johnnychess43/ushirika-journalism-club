@@ -25,7 +25,7 @@ services:
         sync: false
       - key: BOOTSTRAP_ADMIN_PASSWORD
         sync: false
-      - key: MPESA_PAYBILL_OR_TILL
+      - key: MPESA_RECIPIENT_NUMBER
         value: "0140415653"
       - key: COOKIE_SECURE
         value: "true"
