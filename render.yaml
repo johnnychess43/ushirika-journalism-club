@@ -6,9 +6,15 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app
     healthCheckPath: /health
+    disk:
+      name: ushirika-upload-storage
+      mountPath: /var/data
+      sizeGB: 1
     envVars:
       - key: SECRET_KEY
         generateValue: true
+      - key: INSTANCE_DIR
+        value: /var/data/instance
       - key: DATABASE_URL
         fromDatabase:
           name: ushirika-club-db
