@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: ushirika-journalism-club
+    runtime: python
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    healthCheckPath: /health
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: ushirika-club-db
+          property: connectionString
+      - key: BOOTSTRAP_ADMIN_NAME
+        value: John Chesiro Cheptai
+      - key: BOOTSTRAP_ADMIN_EMAIL
+        sync: false
+      - key: BOOTSTRAP_ADMIN_PASSWORD
+        sync: false
+      - key: MPESA_PAYBILL_OR_TILL
+        value: "0140415653"
+      - key: COOKIE_SECURE
+        value: "true"
+
+databases:
+  - name: ushirika-club-db
+    plan: starter
+    databaseName: ushirika
+    user: ushirika_admin
