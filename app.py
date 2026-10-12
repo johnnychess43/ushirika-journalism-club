@@ -8,6 +8,8 @@ from pathlib import Path
 
 from flask import Flask, abort, flash, redirect, render_template, request, send_from_directory, url_for, Response
 from flask_login import LoginManager, UserMixin, current_user, login_required, login_user, logout_user
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
 from sqlalchemy import func
@@ -33,9 +35,15 @@ app.config.update(
     SESSION_COOKIE_SECURE=os.environ.get("COOKIE_SECURE", "true").lower() == "true",
     REMEMBER_COOKIE_HTTPONLY=True,
     REMEMBER_COOKIE_SECURE=os.environ.get("COOKIE_SECURE", "true").lower() == "true",
+    SESSION_PROTECTION="strong",
+    PERMANENT_SESSION_LIFETIME=1800,
+    RATELIMIT_HEADERS_ENABLED=True,
+    RATELIMIT_STORAGE_URI=os.environ.get("RATELIMIT_STORAGE_URI", "memory://"),
+    RATELIMIT_STRATEGY="fixed-window",
 )
 db = SQLAlchemy(app)
 csrf = CSRFProtect(app)
+limiter = Limiter(get_remote_address, app=app, default_limits=[])
 login_manager = LoginManager(app)
 login_manager.login_view = "login"
 login_manager.login_message = "Please sign in to access that page."
@@ -47,6 +55,8 @@ def add_security_headers(response):
     response.headers.setdefault("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
     response.headers.setdefault("X-Content-Type-Options", "nosniff")
     response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Cross-Origin-Opener-Policy", "same-origin")
+    response.headers.setdefault("X-Permitted-Cross-Domain-Policies", "none")
     response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
     response.headers.setdefault("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
     response.headers.setdefault(
@@ -325,6 +335,7 @@ def minutes():
 
 
 @app.route("/register", methods=["GET", "POST"])
+@limiter.limit("5 per hour", methods=["POST"])
 def register():
     if request.method == "POST":
         name = request.form.get("full_name", "").strip()
@@ -372,6 +383,8 @@ def register():
 
 
 @app.route("/login", methods=["GET", "POST"])
+@limiter.limit("5 per minute", methods=["POST"])
+@limiter.limit("20 per hour", methods=["POST"])
 def login():
     if current_user.is_authenticated and current_user.approved:
         return redirect(url_for("dashboard"))
@@ -397,6 +410,8 @@ def login():
 
 
 @app.route("/patron-centre", methods=["GET", "POST"])
+@limiter.limit("5 per minute", methods=["POST"])
+@limiter.limit("20 per hour", methods=["POST"])
 def patron_centre():
     allowed_roles = {"patron", "assistant_patron"}
     if current_user.is_authenticated:
@@ -790,6 +805,11 @@ def service_worker():
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.errorhandler(429)
+def rate_limited(_error):
+    return render_template("error.html", code=429, message="Too many requests. Please wait a little while and try again."), 429
 
 
 @app.errorhandler(403)
