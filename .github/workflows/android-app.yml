@@ -48,11 +48,17 @@ jobs:
         run: |
           echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/ushirika-upload.jks"
           echo "ANDROID_KEYSTORE_PATH=$RUNNER_TEMP/ushirika-upload.jks" >> "$GITHUB_ENV"
-      - name: Use the repository's CUK logo as the app icon
+      - name: Normalize the CUK logo for Android resources
         run: |
           mkdir -p app/src/main/res/drawable
           test -s ../CUK-logo.png
-          cp ../CUK-logo.png app/src/main/res/drawable/cuk_logo.png
+          if ! command -v convert >/dev/null 2>&1; then
+            sudo apt-get update
+            sudo apt-get install -y imagemagick
+          fi
+          # Re-encode the source logo as a standard 8-bit PNG; Android AAPT2
+          # can reject PNGs with unusual colour profiles or bit depths.
+          convert ../CUK-logo.png -strip -depth 8 PNG32:app/src/main/res/drawable/cuk_logo.png
           file app/src/main/res/drawable/cuk_logo.png
       - name: Build debug APK
         run: gradle assembleDebug
