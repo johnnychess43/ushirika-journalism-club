@@ -41,6 +41,33 @@ login_manager.login_view = "login"
 login_manager.login_message = "Please sign in to access that page."
 login_manager.login_message_category = "info"
 
+@app.after_request
+def add_security_headers(response):
+    """Apply HTTPS and browser-side security controls to every response."""
+    response.headers.setdefault("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    response.headers.setdefault("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+    response.headers.setdefault(
+        "Content-Security-Policy",
+        "default-src 'self'; "
+        "base-uri 'self'; "
+        "object-src 'none'; "
+        "frame-ancestors 'none'; "
+        "form-action 'self'; "
+        "upgrade-insecure-requests; "
+        "script-src 'self' 'unsafe-inline'; "
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+        "font-src 'self' https://fonts.gstatic.com data:; "
+        "img-src 'self' data: https://images.unsplash.com https:;"
+    )
+    if request.path in {"/login", "/register", "/patron-centre"} or request.path.startswith("/dashboard") or request.path.startswith("/admin"):
+        response.headers.setdefault("Cache-Control", "no-store")
+        response.headers.setdefault("Pragma", "no-cache")
+    return response
+
+
 ROLES = {
     "developer": "Developer",
     "patron": "Club Patron",
