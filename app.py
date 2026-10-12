@@ -35,7 +35,6 @@ app.config.update(
     SESSION_COOKIE_SECURE=os.environ.get("COOKIE_SECURE", "true").lower() == "true",
     REMEMBER_COOKIE_HTTPONLY=True,
     REMEMBER_COOKIE_SECURE=os.environ.get("COOKIE_SECURE", "true").lower() == "true",
-    SESSION_PROTECTION="strong",
     PERMANENT_SESSION_LIFETIME=1800,
     RATELIMIT_HEADERS_ENABLED=True,
     RATELIMIT_STORAGE_URI=os.environ.get("RATELIMIT_STORAGE_URI", "memory://"),
@@ -45,6 +44,7 @@ db = SQLAlchemy(app)
 csrf = CSRFProtect(app)
 limiter = Limiter(get_remote_address, app=app, default_limits=[])
 login_manager = LoginManager(app)
+login_manager.session_protection = "strong"
 login_manager.login_view = "login"
 login_manager.login_message = "Please sign in to access that page."
 login_manager.login_message_category = "info"
