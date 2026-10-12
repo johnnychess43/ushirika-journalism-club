@@ -1,3 +1,11 @@
 User-agent: *
 Allow: /
-Sitemap: https://ushirika-journalism-club.onrender.com/sitemap.xml
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /login
+Disallow: /register
+Disallow: /minutes
+Disallow: /patron-centre
+Disallow: /logout
+
+Sitemap: https://ushirikajournalisimclub.world/sitemap.xml
