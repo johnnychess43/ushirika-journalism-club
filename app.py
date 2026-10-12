@@ -205,6 +205,11 @@ def cuk_logo():
     return send_from_directory(BASE_DIR, "CUK-logo.png")
 
 
+@app.get("/google38ffbe2f0af604ea.html")
+def google_site_verification():
+    return Response("google-site-verification: google38ffbe2f0af604ea.html", mimetype="text/html")
+
+
 @app.get("/")
 def home():
     articles = Article.query.filter_by(status="published").order_by(Article.created_at.desc()).limit(3).all()
