@@ -142,6 +142,24 @@ p,h1,h2,h3,h4,td,th,a,small,label{overflow-wrap:anywhere}
   .brand-copy small{font-size:7px;letter-spacing:0}
 }
 
+
+/* Mobile rendering safety layer */
+@media(max-width:850px){
+  html,body{width:100%;max-width:100%;overflow-x:hidden}
+  main.wrap{display:block;width:calc(100% - 24px);min-height:40vh}
+  .hero{display:block!important;visibility:visible!important;opacity:1!important;width:100%;max-width:100%;background:var(--orange);color:#fff}
+  .hero-inner{display:grid!important;grid-template-columns:minmax(0,1fr)!important;width:100%;min-width:0}
+  .hero-inner>*{min-width:0;max-width:100%}
+  .section,.featured-story{display:block;visibility:visible;opacity:1}
+  .hero-art{width:100%;min-width:0;background-color:#172b25}
+}
+@media(max-width:380px){
+  .wrap,main.wrap{width:calc(100% - 20px)}
+  .hero h1{font-size:clamp(30px,9vw,36px);overflow-wrap:anywhere}
+  .featured-overlay{padding:14px}
+  .nav-toggle{flex-shrink:0}
+}
+
 </style>
 {% block head %}{% endblock %}
 </head>
