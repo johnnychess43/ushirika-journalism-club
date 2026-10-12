@@ -210,6 +210,46 @@ def google_site_verification():
     return Response("google-site-verification: google38ffbe2f0af604ea.html", mimetype="text/html")
 
 
+@app.get("/robots.txt")
+def robots_txt():
+    rules = """User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /admin
+Disallow: /login
+Disallow: /register
+Disallow: /minutes
+Disallow: /patron-centre
+Disallow: /logout
+
+Sitemap: https://ushirikajournalisimclub.world/sitemap.xml
+"""
+    return Response(rules, mimetype="text/plain")
+
+
+@app.get("/sitemap.xml")
+def sitemap_xml():
+    # List public pages and published articles only.
+    site_url = "https://ushirikajournalisimclub.world"
+    public_paths = ["/", "/articles", "/events", "/gallery", "/forums", "/payment"]
+    entries = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+    ]
+    for path in public_paths:
+        entries.append(f"<url><loc>{site_url}{path}</loc></url>")
+    published_articles = Article.query.filter_by(status="published").order_by(Article.updated_at.desc()).all()
+    for article in published_articles:
+        lastmod = article.updated_at.strftime("%Y-%m-%d") if article.updated_at else ""
+        entries.append(
+            f"<url><loc>{site_url}/articles/{article.id}</loc>"
+            + (f"<lastmod>{lastmod}</lastmod>" if lastmod else "")
+            + "</url>"
+        )
+    entries.append("</urlset>")
+    return Response("\n".join(entries), mimetype="application/xml")
+
+
 @app.get("/")
 def home():
     articles = Article.query.filter_by(status="published").order_by(Article.created_at.desc()).limit(3).all()
