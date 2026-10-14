@@ -40,21 +40,9 @@ def install(app, db, User, Article, ClubEvent, ForumPost, ROLES):
             return None
         model = os.environ.get("GEMINI_MODEL", "gemini-3.8-flash")
         url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
-        payload = {
-            "system_instruction": {"parts": [{"text": (
-                "You are Ushirika Journalism Club's event planning assistant. "
-                "Create practical, inclusive, campus-appropriate plans and poster copy. "
-                "Never invent official club policies, prices, contacts, or dates. "
-                "Use clear headings and concise actionable bullets."
-            )}]},
-            "contents": [{"parts": [{"text": prompt}]}],
-        }
+        payload = {"system_instruction": {"parts": [{"text": "You are Ushirika Journalism Club's event planning assistant. Create practical, inclusive, campus-appropriate plans and poster copy. Never invent official club policies, prices, contacts, or dates. Use clear headings and concise actionable bullets."}]}, "contents": [{"parts": [{"text": prompt}]}]}
         data = json.dumps(payload).encode("utf-8")
-        req = urllib.request.Request(
-            url, data=data,
-            headers={"Content-Type": "application/json", "x-goog-api-key": api_key},
-            method="POST",
-        )
+        req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json", "x-goog-api-key": api_key}, method="POST")
         try:
             with urllib.request.urlopen(req, timeout=35) as response:
                 result = json.loads(response.read().decode("utf-8"))
@@ -91,6 +79,27 @@ def install(app, db, User, Article, ClubEvent, ForumPost, ROLES):
                 return redirect(url_for("login"))
         return render_template("member_account.html")
 
+    # Members can submit newsroom articles for editorial approval.
+    original_new_article = app.view_functions.get("new_article")
+    if original_new_article:
+        @app.route("/dashboard/articles/new", methods=["GET", "POST"], endpoint="member_new_article")
+        @login_required
+        def member_new_article():
+            if not approved_account() or current_user.role != MEMBER_ROLE:
+                return original_new_article()
+            if request.method == "POST":
+                title = request.form.get("title", "").strip()
+                body = request.form.get("body", "").strip()
+                summary = request.form.get("summary", "").strip()
+                if title and body:
+                    db.session.add(Article(title=title, summary=summary, body=body, author_id=current_user.id, status="pending"))
+                    db.session.commit()
+                    flash("Your article was submitted for editorial review.", "success")
+                    return redirect(url_for("dashboard"))
+                flash("Title and article text are required.", "danger")
+            return render_template("editor.html", page_title="Write an article", submit_label="Submit article", kind="article")
+        app.view_functions["new_article"] = member_new_article
+
     @app.route("/dashboard/ai", methods=["GET", "POST"])
     @login_required
     def ai_studio():
@@ -110,20 +119,9 @@ def install(app, db, User, Article, ClubEvent, ForumPost, ROLES):
             result = gemini(prompt)
             if not result:
                 if mode == "poster":
-                    result = (f"{title or 'USHIRIKA JOURNALISM CLUB EVENT'}\n\n"
-                              f"{goal or 'Stories. Ideas. Community.'}\n\n"
-                              f"DATE / TIME: {date or 'To be announced'}\n"
-                              f"VENUE: {venue or 'To be announced'}\n"
-                              f"FOR: {audience or 'Club members and students'}\n\n"
-                              "JOIN US • SHARE • REPORT • CONNECT")
+                    result = (f"{title or 'USHIRIKA JOURNALISM CLUB EVENT'}\n\n{goal or 'Stories. Ideas. Community.'}\n\nDATE / TIME: {date or 'To be announced'}\nVENUE: {venue or 'To be announced'}\nFOR: {audience or 'Club members and students'}\n\nJOIN US • SHARE • REPORT • CONNECT")
                 else:
-                    result = (f"EVENT PLAN — {title or 'Ushirika Club Event'}\n\n"
-                              "1. Preparation: confirm venue, programme, speakers and permissions.\n"
-                              "2. Publicity: publish a poster, website notice and member announcement.\n"
-                              "3. Programme: opening, main activity, audience participation, Q&A and closing.\n"
-                              "4. Staffing: event lead, registration desk, programme host, photographer and communications lead.\n"
-                              "5. Safety: confirm venue capacity, accessibility, emergency contacts and responsible supervision.\n"
-                              "6. Follow-up: publish highlights, thank participants and record lessons learned.")
+                    result = (f"EVENT PLAN — {title or 'Ushirika Club Event'}\n\n1. Preparation: confirm venue, programme, speakers and permissions.\n2. Publicity: publish a poster, website notice and member announcement.\n3. Programme: opening, main activity, audience participation, Q&A and closing.\n4. Staffing: event lead, registration desk, programme host, photographer and communications lead.\n5. Safety: confirm venue capacity, accessibility, emergency contacts and responsible supervision.\n6. Follow-up: publish highlights, thank participants and record lessons learned.")
                 flash("AI key is not configured, so the built-in planning template was used. Add GEMINI_API_KEY in Render to enable Gemini generation.", "info")
         return render_template("ai_studio.html", result=result, mode=mode)
 
@@ -193,10 +191,7 @@ def install(app, db, User, Article, ClubEvent, ForumPost, ROLES):
             confirm = request.form.get("confirm_password", "")
             normalized = normalize(name)
             valid_email = email.count("@") == 1 and bool(email.split("@", 1)[0]) and "." in email.split("@", 1)[1]
-            restricted = {
-                EVENT_MANAGER_ROLE: EVENTS_MANAGER_NAME,
-                VICE_EVENTS_MANAGER_ROLE: VICE_EVENTS_MANAGER_NAME,
-            }
+            restricted = {EVENT_MANAGER_ROLE: EVENTS_MANAGER_NAME, VICE_EVENTS_MANAGER_ROLE: VICE_EVENTS_MANAGER_NAME}
             if not name or not valid_email or role not in ROLES or role == "developer":
                 flash("Choose a valid leadership role and use a valid email address.", "danger")
             elif len(password) < 12:
@@ -235,12 +230,5 @@ def install(app, db, User, Article, ClubEvent, ForumPost, ROLES):
     def feature_health():
         return jsonify({"ok": True, "features": ["member-accounts", "club-chat", "events-ai", "poster-studio"]})
 
-    app.extensions["ushirika_features"] = {
-        "member_role": MEMBER_ROLE,
-        "events_manager_role": EVENT_MANAGER_ROLE,
-        "vice_events_manager_role": VICE_EVENTS_MANAGER_ROLE,
-        "events_manager_name": EVENTS_MANAGER_NAME,
-        "vice_events_manager_name": VICE_EVENTS_MANAGER_NAME,
-        "chat_model": ChatMessage,
-    }
+    app.extensions["ushirika_features"] = {"member_role": MEMBER_ROLE, "events_manager_role": EVENT_MANAGER_ROLE, "vice_events_manager_role": VICE_EVENTS_MANAGER_ROLE, "events_manager_name": EVENTS_MANAGER_NAME, "vice_events_manager_name": VICE_EVENTS_MANAGER_NAME, "chat_model": ChatMessage}
     return app
