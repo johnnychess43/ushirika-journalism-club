@@ -15,6 +15,9 @@ def install(app, db, User, Article, ClubEvent, ForumPost, ROLES):
     VICE_EVENTS_MANAGER_ROLE = "vice_events_manager"
     EVENTS_MANAGER_NAME = "clara wanza"
     VICE_EVENTS_MANAGER_NAME = "jack denis rengo"
+    PATRON_NAMES = {"victor j. njogu", "victor njogu"}
+    ASSISTANT_PATRON_NAMES = {"meshack m.ngangi", "meshack m. ngangi"}
+    TREASURER_NAME = "john chesiro cheptai"
 
     class ChatMessage(db.Model):
         __tablename__ = "chat_message"
@@ -149,7 +152,6 @@ def install(app, db, User, Article, ClubEvent, ForumPost, ROLES):
         users = User.query.filter_by(active=True, approved=True).order_by(User.full_name.asc()).all()
         return jsonify([{"id": u.id, "name": u.full_name, "role": u.role} for u in users])
 
-    # Give the two Events Manager roles access to the existing event creator.
     original_new_event = app.view_functions.get("new_event")
     if original_new_event:
         @app.route("/dashboard/events/new", methods=["GET", "POST"], endpoint="events_manager_new_event")
@@ -180,7 +182,6 @@ def install(app, db, User, Article, ClubEvent, ForumPost, ROLES):
             return render_template("editor.html", page_title="Create an event", submit_label="Save event", kind="event")
         app.view_functions["new_event"] = events_manager_new_event
 
-    # Replace leadership registration while keeping public member registration separate.
     original_register = app.view_functions.get("register")
     def leadership_register():
         if request.method == "POST":
@@ -202,6 +203,12 @@ def install(app, db, User, Article, ClubEvent, ForumPost, ROLES):
                 flash("An account already uses that email address.", "danger")
             elif role in restricted and normalized != restricted[role]:
                 flash(f"The {ROLES[role]} role is restricted to {restricted[role]}.", "danger")
+            elif role == "patron" and normalized not in PATRON_NAMES:
+                flash("The Patron role is restricted to Victor J. Njogu / Victor Njogu.", "danger")
+            elif role == "assistant_patron" and normalized not in ASSISTANT_PATRON_NAMES:
+                flash("The Assistant Patron role is restricted to Meshack M. Ngangi.", "danger")
+            elif role == "treasurer" and normalized != TREASURER_NAME:
+                flash("The Treasurer role is restricted to John Chesiro Cheptai.", "danger")
             elif role in restricted and User.query.filter_by(role=role).first():
                 flash("That leadership role already has an account. Contact the developer for recovery.", "danger")
             else:
