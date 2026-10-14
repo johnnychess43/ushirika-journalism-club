@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Member Account | Ushirika{% endblock %}
+{% block content %}
+<div class="form-card">
+  <div class="eyebrow">Club member account</div>
+  <h1>Create your member account</h1>
+  <p>This is separate from the public member registration form. Use this page to request the secure account you will use for articles, club chat and member resources.</p>
+  <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="field"><label for="full_name">Full name</label><input id="full_name" name="full_name" autocomplete="name" maxlength="120" required></div>
+    <div class="field"><label for="email">Email address</label><input id="email" name="email" type="email" autocomplete="email" maxlength="180" required></div>
+    <div class="field"><label for="password">Create password</label><input id="password" name="password" type="password" minlength="12" autocomplete="new-password" required><small>At least 12 characters.</small></div>
+    <div class="field"><label for="confirm_password">Confirm password</label><input id="confirm_password" name="confirm_password" type="password" minlength="12" autocomplete="new-password" required></div>
+    <button class="btn blue" type="submit">Request member account</button>
+  </form>
+  <p style="margin-top:16px">Already approved? <a href="{{ url_for('login') }}" style="color:var(--blue);text-decoration:underline">Sign in</a>.</p>
+</div>
+{% endblock %}
