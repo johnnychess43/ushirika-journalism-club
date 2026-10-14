@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Club Chat | Ushirika{% endblock %}
+{% block content %}
+<section class="section">
+  <div class="eyebrow">Member community</div>
+  <h1 class="section-title">Club Chat 💬</h1>
+  <p>Share ideas, coordinate stories and talk with fellow approved Ushirika members.</p>
+  <div class="card" style="max-width:850px;margin:20px 0">
+    <div style="max-height:520px;overflow:auto;display:flex;flex-direction:column;gap:10px">
+      {% for message in messages %}
+      <div style="padding:12px;border:1px solid var(--line);border-radius:8px;background:{% if message.sender_id == current_user.id %}var(--soft){% else %}#fff{% endif %}">
+        <strong>{{ message.sender.full_name }}</strong> <span class="meta">{{ message.created_at.strftime('%d %b %Y %H:%M') }}</span>
+        <div style="margin-top:5px;white-space:pre-wrap">{{ message.body }}</div>
+      </div>
+      {% else %}<div class="empty">No messages yet. Start the conversation.</div>{% endfor %}
+    </div>
+    <form method="post" action="{{ url_for('chat_send') }}" style="margin-top:18px">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="field"><label for="body">Message</label><textarea id="body" name="body" maxlength="2000" required placeholder="Write to the club..."></textarea></div>
+      <button class="btn blue" type="submit">Send message</button>
+    </form>
+  </div>
+</section>
+{% endblock %}
