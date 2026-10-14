@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}AI Event & Poster Studio | Ushirika{% endblock %}
+{% block content %}
+<section class="section">
+  <div class="eyebrow">Ushirika AI</div>
+  <h1 class="section-title">Event & Poster Studio 🤖</h1>
+  <p>Turn an event idea into a practical plan or polished poster copy. The poster preview can be printed or saved from your browser.</p>
+  <div class="grid">
+    <article class="card"><h3>Plan an event</h3><form method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="mode" value="event_plan"><div class="field"><label>Event name</label><input name="title" required></div><div class="field"><label>Date / time</label><input name="event_date" placeholder="e.g. Friday, 4:00 PM"></div><div class="field"><label>Venue</label><input name="venue"></div><div class="field"><label>Audience</label><input name="audience" value="Ushirika members and CUK students"></div><div class="field"><label>Goal</label><textarea name="goal" placeholder="What should the event achieve?"></textarea></div><button class="btn blue" type="submit">Generate event plan</button></form></article>
+    <article class="card"><h3>Create a poster</h3><form method="post" id="poster-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="mode" value="poster"><div class="field"><label>Event name</label><input id="poster-title" name="title" required></div><div class="field"><label>Date / time</label><input id="poster-date" name="event_date"></div><div class="field"><label>Venue</label><input id="poster-venue" name="venue"></div><div class="field"><label>Audience</label><input id="poster-audience" name="audience" value="Ushirika members and CUK students"></div><div class="field"><label>Message / goal</label><textarea id="poster-goal" name="goal"></textarea></div><button class="btn" type="submit">Generate poster copy</button></form><button class="btn blue" type="button" style="margin-top:10px" onclick="previewPoster()">Preview poster</button><button class="btn" type="button" style="margin-top:10px" onclick="window.print()">Print / save poster</button></article>
+  </div>
+  {% if result %}<article class="card" style="margin-top:20px"><h3>AI result</h3><div class="article-body">{{ result }}</div></article>{% endif %}
+  <div id="poster-preview" class="card" style="margin-top:20px;display:none;max-width:700px;text-align:center;padding:45px;background:var(--orange);color:#fff"><div style="font-size:12px;letter-spacing:.18em;font-weight:700">USHIRIKA JOURNALISM CLUB</div><h2 id="poster-preview-title" style="font:700 42px/1.05 'Playfair Display',serif;margin:18px 0"></h2><p id="poster-preview-goal" style="font-size:18px"></p><p id="poster-preview-details" style="line-height:1.8"></p><strong>JOIN • SHARE • REPORT • CONNECT</strong></div>
+</section>
+<script>
+function previewPoster(){const title=document.getElementById('poster-title').value||'Ushirika Journalism Club Event';const date=document.getElementById('poster-date').value||'Date / time to be announced';const venue=document.getElementById('poster-venue').value||'Venue to be announced';const audience=document.getElementById('poster-audience').value||'Club members and students';const goal=document.getElementById('poster-goal').value||'Stories, ideas and community.';document.getElementById('poster-preview-title').textContent=title;document.getElementById('poster-preview-goal').textContent=goal;document.getElementById('poster-preview-details').textContent=date+' • '+venue+' • '+audience;document.getElementById('poster-preview').style.display='block';document.getElementById('poster-preview').scrollIntoView({behavior:'smooth',block:'center'});}
+</script>
+{% endblock %}
