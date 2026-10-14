@@ -4,7 +4,7 @@ services:
     runtime: python
     plan: starter
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app
+    startCommand: gunicorn wsgi:app
     healthCheckPath: /health
     disk:
       name: ushirika-upload-storage
@@ -25,6 +25,10 @@ services:
         sync: false
       - key: BOOTSTRAP_ADMIN_PASSWORD
         sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-3.8-flash
       - key: MPESA_RECIPIENT_NUMBER
         value: "0140415653"
       - key: COOKIE_SECURE
