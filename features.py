@@ -9,7 +9,7 @@ from werkzeug.security import generate_password_hash
 
 
 def install(app, db, User, Article, ClubEvent, ForumPost, ROLES):
-    """Install Ushirika member accounts, Events Manager roles, AI studio and club chat."""
+    """Install Ushirika member accounts, Events Manager roles, AI studio, chat and password recovery."""
     MEMBER_ROLE = "member"
     EVENT_MANAGER_ROLE = "events_manager"
     VICE_EVENTS_MANAGER_ROLE = "vice_events_manager"
@@ -26,6 +26,15 @@ def install(app, db, User, Article, ClubEvent, ForumPost, ROLES):
         body = db.Column(db.Text, nullable=False)
         created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
         sender = db.relationship("User")
+
+    class PasswordResetRequest(db.Model):
+        __tablename__ = "password_reset_request"
+        id = db.Column(db.Integer, primary_key=True)
+        user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, index=True)
+        requested_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+        resolved_at = db.Column(db.DateTime, nullable=True)
+        status = db.Column(db.String(20), default="pending", nullable=False)
+        user = db.relationship("User")
 
     def approved_account():
         return current_user.is_authenticated and current_user.active and current_user.approved
@@ -82,7 +91,6 @@ def install(app, db, User, Article, ClubEvent, ForumPost, ROLES):
                 return redirect(url_for("login"))
         return render_template("member_account.html")
 
-    # Members can submit newsroom articles for editorial approval.
     original_new_article = app.view_functions.get("new_article")
     if original_new_article:
         @app.route("/dashboard/articles/new", methods=["GET", "POST"], endpoint="member_new_article")
@@ -110,21 +118,11 @@ def install(app, db, User, Article, ClubEvent, ForumPost, ROLES):
         result = ""
         mode = request.form.get("mode", "event_plan")
         if request.method == "POST":
-            title = request.form.get("title", "").strip()
-            date = request.form.get("event_date", "").strip()
-            venue = request.form.get("venue", "").strip()
-            audience = request.form.get("audience", "members and students").strip()
-            goal = request.form.get("goal", "").strip()
-            if mode == "poster":
-                prompt = f"Create polished poster copy for a club event. Event: {title}. Date/time: {date}. Venue: {venue}. Audience: {audience}. Goal: {goal}. Include a short headline, 1-sentence hook, key details and a call to action."
-            else:
-                prompt = f"Plan this journalism club event: {title}. Date/time: {date}. Venue: {venue}. Audience: {audience}. Goal: {goal}. Return a timeline, programme ideas, publicity checklist, staffing roles, materials, risk checks and follow-up plan."
+            title = request.form.get("title", "").strip(); date = request.form.get("event_date", "").strip(); venue = request.form.get("venue", "").strip(); audience = request.form.get("audience", "members and students").strip(); goal = request.form.get("goal", "").strip()
+            prompt = (f"Create polished poster copy for a club event. Event: {title}. Date/time: {date}. Venue: {venue}. Audience: {audience}. Goal: {goal}. Include a short headline, 1-sentence hook, key details and a call to action." if mode == "poster" else f"Plan this journalism club event: {title}. Date/time: {date}. Venue: {venue}. Audience: {audience}. Goal: {goal}. Return a timeline, programme ideas, publicity checklist, staffing roles, materials, risk checks and follow-up plan.")
             result = gemini(prompt)
             if not result:
-                if mode == "poster":
-                    result = (f"{title or 'USHIRIKA JOURNALISM CLUB EVENT'}\n\n{goal or 'Stories. Ideas. Community.'}\n\nDATE / TIME: {date or 'To be announced'}\nVENUE: {venue or 'To be announced'}\nFOR: {audience or 'Club members and students'}\n\nJOIN US • SHARE • REPORT • CONNECT")
-                else:
-                    result = (f"EVENT PLAN — {title or 'Ushirika Club Event'}\n\n1. Preparation: confirm venue, programme, speakers and permissions.\n2. Publicity: publish a poster, website notice and member announcement.\n3. Programme: opening, main activity, audience participation, Q&A and closing.\n4. Staffing: event lead, registration desk, programme host, photographer and communications lead.\n5. Safety: confirm venue capacity, accessibility, emergency contacts and responsible supervision.\n6. Follow-up: publish highlights, thank participants and record lessons learned.")
+                result = (f"{title or 'USHIRIKA JOURNALISM CLUB EVENT'}\n\n{goal or 'Stories. Ideas. Community.'}\n\nDATE / TIME: {date or 'To be announced'}\nVENUE: {venue or 'To be announced'}\nFOR: {audience or 'Club members and students'}\n\nJOIN US • SHARE • REPORT • CONNECT" if mode == "poster" else f"EVENT PLAN — {title or 'Ushirika Club Event'}\n\n1. Preparation: confirm venue, programme, speakers and permissions.\n2. Publicity: publish a poster, website notice and member announcement.\n3. Programme: opening, main activity, audience participation, Q&A and closing.\n4. Staffing: event lead, registration desk, programme host, photographer and communications lead.\n5. Safety: confirm venue capacity, accessibility, emergency contacts and responsible supervision.\n6. Follow-up: publish highlights, thank participants and record lessons learned.")
                 flash("AI key is not configured, so the built-in planning template was used. Add GEMINI_API_KEY in Render to enable Gemini generation.", "info")
         return render_template("ai_studio.html", result=result, mode=mode)
 
@@ -160,24 +158,14 @@ def install(app, db, User, Article, ClubEvent, ForumPost, ROLES):
             if not approved_account() or current_user.role not in {EVENT_MANAGER_ROLE, VICE_EVENTS_MANAGER_ROLE}:
                 return original_new_event()
             if request.method == "POST":
-                title = request.form.get("title", "").strip()
-                description = request.form.get("body", "").strip()
-                venue = request.form.get("venue", "").strip()
-                date_text = request.form.get("event_date", "").strip()
-                fee_text = request.form.get("fee", "0").strip()
+                title = request.form.get("title", "").strip(); description = request.form.get("body", "").strip(); venue = request.form.get("venue", "").strip(); date_text = request.form.get("event_date", "").strip(); fee_text = request.form.get("fee", "0").strip()
                 try:
-                    event_date = datetime.fromisoformat(date_text) if date_text else None
-                    fee = int(fee_text or 0)
-                    if fee < 0:
-                        raise ValueError
+                    event_date = datetime.fromisoformat(date_text) if date_text else None; fee = int(fee_text or 0)
+                    if fee < 0: raise ValueError
                 except ValueError:
-                    flash("Enter a valid date and a non-negative whole-number fee.", "danger")
-                    return render_template("editor.html", page_title="Create an event", submit_label="Save event", kind="event")
+                    flash("Enter a valid date and a non-negative whole-number fee.", "danger"); return render_template("editor.html", page_title="Create an event", submit_label="Save event", kind="event")
                 if title and description:
-                    db.session.add(ClubEvent(title=title, description=description, venue=venue, event_date=event_date, fee=fee, created_by=current_user.id))
-                    db.session.commit()
-                    flash("Event published.", "success")
-                    return redirect(url_for("events"))
+                    db.session.add(ClubEvent(title=title, description=description, venue=venue, event_date=event_date, fee=fee, created_by=current_user.id)); db.session.commit(); flash("Event published.", "success"); return redirect(url_for("events"))
                 flash("Event title and description are required.", "danger")
             return render_template("editor.html", page_title="Create an event", submit_label="Save event", kind="event")
         app.view_functions["new_event"] = events_manager_new_event
@@ -185,57 +173,80 @@ def install(app, db, User, Article, ClubEvent, ForumPost, ROLES):
     original_register = app.view_functions.get("register")
     def leadership_register():
         if request.method == "POST":
-            name = request.form.get("full_name", "").strip()
-            email = request.form.get("email", "").strip().lower()
-            role = request.form.get("role", "").strip()
-            password = request.form.get("password", "")
-            confirm = request.form.get("confirm_password", "")
-            normalized = normalize(name)
-            valid_email = email.count("@") == 1 and bool(email.split("@", 1)[0]) and "." in email.split("@", 1)[1]
-            restricted = {EVENT_MANAGER_ROLE: EVENTS_MANAGER_NAME, VICE_EVENTS_MANAGER_ROLE: VICE_EVENTS_MANAGER_NAME}
-            if not name or not valid_email or role not in ROLES or role == "developer":
-                flash("Choose a valid leadership role and use a valid email address.", "danger")
-            elif len(password) < 12:
-                flash("Use a password with at least 12 characters.", "danger")
-            elif password != confirm:
-                flash("The passwords do not match.", "danger")
-            elif User.query.filter_by(email=email).first():
-                flash("An account already uses that email address.", "danger")
-            elif role in restricted and normalized != restricted[role]:
-                flash(f"The {ROLES[role]} role is restricted to {restricted[role]}.", "danger")
-            elif role == "patron" and normalized not in PATRON_NAMES:
-                flash("The Patron role is restricted to Victor J. Njogu / Victor Njogu.", "danger")
-            elif role == "assistant_patron" and normalized not in ASSISTANT_PATRON_NAMES:
-                flash("The Assistant Patron role is restricted to Meshack M. Ngangi.", "danger")
-            elif role == "treasurer" and normalized != TREASURER_NAME:
-                flash("The Treasurer role is restricted to John Chesiro Cheptai.", "danger")
-            elif role in restricted and User.query.filter_by(role=role).first():
-                flash("That leadership role already has an account. Contact the developer for recovery.", "danger")
+            name=request.form.get("full_name", "").strip(); email=request.form.get("email", "").strip().lower(); role=request.form.get("role", "").strip(); password=request.form.get("password", ""); confirm=request.form.get("confirm_password", ""); normalized=normalize(name); valid_email=email.count("@") == 1 and bool(email.split("@", 1)[0]) and "." in email.split("@", 1)[1]; restricted={EVENT_MANAGER_ROLE: EVENTS_MANAGER_NAME, VICE_EVENTS_MANAGER_ROLE: VICE_EVENTS_MANAGER_NAME}
+            if not name or not valid_email or role not in ROLES or role == "developer": flash("Choose a valid leadership role and use a valid email address.", "danger")
+            elif len(password) < 12: flash("Use a password with at least 12 characters.", "danger")
+            elif password != confirm: flash("The passwords do not match.", "danger")
+            elif User.query.filter_by(email=email).first(): flash("An account already uses that email address.", "danger")
+            elif role in restricted and normalized != restricted[role]: flash(f"The {ROLES[role]} role is restricted to {restricted[role]}.", "danger")
+            elif role == "patron" and normalized not in PATRON_NAMES: flash("The Patron role is restricted to Victor J. Njogu / Victor Njogu.", "danger")
+            elif role == "assistant_patron" and normalized not in ASSISTANT_PATRON_NAMES: flash("The Assistant Patron role is restricted to Meshack M. Ngangi.", "danger")
+            elif role == "treasurer" and normalized != TREASURER_NAME: flash("The Treasurer role is restricted to John Chesiro Cheptai.", "danger")
+            elif role in restricted and User.query.filter_by(role=role).first(): flash("That leadership role already has an account. Contact the developer for recovery.", "danger")
             else:
-                user = User(full_name=name, email=email, role=role, approved=False)
-                user.password_hash = generate_password_hash(password)
-                db.session.add(user)
-                db.session.commit()
-                flash("Leadership account request received. A developer must approve it before you can sign in.", "success")
-                return redirect(url_for("login"))
+                user=User(full_name=name,email=email,role=role,approved=False); user.password_hash=generate_password_hash(password); db.session.add(user); db.session.commit(); flash("Leadership account request received. A developer must approve it before you can sign in.", "success"); return redirect(url_for("login"))
         return render_template("register.html")
+    if original_register: app.view_functions["register"] = leadership_register
 
-    if original_register:
-        app.view_functions["register"] = leadership_register
+    @app.get("/forgot-password")
+    def forgot_password():
+        return render_template("forgot_password.html")
+
+    @app.post("/forgot-password")
+    @limiter.limit("3 per hour")
+    def request_password_reset():
+        email = request.form.get("email", "").strip().lower()
+        user = User.query.filter_by(email=email, active=True).first()
+        if user and user.role != "developer":
+            pending = PasswordResetRequest.query.filter_by(user_id=user.id, status="pending").first()
+            if not pending:
+                db.session.add(PasswordResetRequest(user_id=user.id)); db.session.commit()
+        flash("If the account exists, the password-reset request has been sent to the developer for approval. No email is sent.", "info")
+        return redirect(url_for("login"))
+
+    @app.get("/admin/password-resets")
+    @login_required
+    def password_resets():
+        role_allowed("developer")
+        requests = PasswordResetRequest.query.filter_by(status="pending").order_by(PasswordResetRequest.requested_at.asc()).all()
+        return render_template("password_resets.html", reset_requests=requests)
+
+    @app.post("/admin/password-resets/<int:request_id>/resolve")
+    @login_required
+    def resolve_password_reset(request_id):
+        role_allowed("developer")
+        reset = db.session.get(PasswordResetRequest, request_id)
+        if not reset or reset.status != "pending":
+            flash("That reset request is no longer pending.", "warning"); return redirect(url_for("password_resets"))
+        password = request.form.get("new_password", "")
+        confirm = request.form.get("confirm_password", "")
+        if len(password) < 12 or password != confirm:
+            flash("The new password must be at least 12 characters and both fields must match.", "danger"); return redirect(url_for("password_resets"))
+        reset.user.password_hash = generate_password_hash(password)
+        reset.status = "resolved"; reset.resolved_at = datetime.utcnow()
+        db.session.commit()
+        flash(f"Password changed for {reset.user.full_name}. Give the new password directly to the member.", "success")
+        return redirect(url_for("password_resets"))
+
+    @app.post("/admin/password-resets/<int:request_id>/dismiss")
+    @login_required
+    def dismiss_password_reset(request_id):
+        role_allowed("developer")
+        reset = db.session.get(PasswordResetRequest, request_id)
+        if reset and reset.status == "pending":
+            reset.status = "dismissed"; reset.resolved_at = datetime.utcnow(); db.session.commit()
+        return redirect(url_for("password_resets"))
 
     @app.get("/dashboard", endpoint="dashboard_v2")
     @login_required
     def dashboard_v2():
-        if not current_user.approved or not current_user.active:
-            return redirect(url_for("login"))
+        if not current_user.approved or not current_user.active: return redirect(url_for("login"))
         pending = Article.query.filter_by(status="pending").count() if current_user.role in {"developer", "chief_editor", "patron", "assistant_patron"} else 0
         return render_template("dashboard_v2.html", pending_articles=pending, is_events_manager=current_user.role in {EVENT_MANAGER_ROLE, VICE_EVENTS_MANAGER_ROLE})
-
     app.view_functions["dashboard"] = dashboard_v2
 
     @app.get("/health/features")
-    def feature_health():
-        return jsonify({"ok": True, "features": ["member-accounts", "club-chat", "events-ai", "poster-studio"]})
+    def feature_health(): return jsonify({"ok": True, "features": ["member-accounts", "club-chat", "events-ai", "poster-studio", "password-recovery-no-email"]})
 
-    app.extensions["ushirika_features"] = {"member_role": MEMBER_ROLE, "events_manager_role": EVENT_MANAGER_ROLE, "vice_events_manager_role": VICE_EVENTS_MANAGER_ROLE, "events_manager_name": EVENTS_MANAGER_NAME, "vice_events_manager_name": VICE_EVENTS_MANAGER_NAME, "chat_model": ChatMessage}
+    app.extensions["ushirika_features"] = {"member_role": MEMBER_ROLE, "events_manager_role": EVENT_MANAGER_ROLE, "vice_events_manager_role": VICE_EVENTS_MANAGER_ROLE, "events_manager_name": EVENTS_MANAGER_NAME, "vice_events_manager_name": VICE_EVENTS_MANAGER_NAME, "chat_model": ChatMessage, "password_reset_model": PasswordResetRequest}
     return app
