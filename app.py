@@ -13,6 +13,8 @@ from flask_limiter.util import get_remote_address
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
 from sqlalchemy import func
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill, Alignment
 from werkzeug.security import check_password_hash, generate_password_hash
 from werkzeug.utils import secure_filename
 
@@ -628,6 +630,86 @@ def export_contributions():
     for row in Contribution.query.order_by(Contribution.created_at.desc()).all():
         writer.writerow([row.member_name, row.member_email, row.amount, row.payment_type, row.reference, "Yes" if row.verified else "No", row.created_at.isoformat()])
     return Response(output.getvalue(), mimetype="text/csv", headers={"Content-Disposition": "attachment; filename=ushirika-contributions.csv"})
+
+@app.get("/dashboard/treasurer/export.xlsx")
+@role_required("developer", "treasurer")
+def export_contributions_excel():
+    """Download a formatted Excel workbook containing finance records and a summary."""
+    records = Contribution.query.order_by(Contribution.created_at.desc()).all()
+    workbook = Workbook()
+    sheet = workbook.active
+    sheet.title = "Contributions"
+    headers = ["Member", "Email", "Amount (KSh)", "Payment type", "M-PESA reference", "Verification status", "Recorded date"]
+    sheet.append(headers)
+
+    def safe_text(value):
+        value = "" if value is None else str(value)
+        return "'" + value if value.startswith(("=", "+", "-", "@")) else value
+
+    for row in records:
+        sheet.append([
+            safe_text(row.member_name),
+            safe_text(row.member_email),
+            row.amount,
+            safe_text(row.payment_type),
+            safe_text(row.reference),
+            "Verified" if row.verified else "Unverified",
+            row.created_at.strftime("%Y-%m-%d %H:%M") if row.created_at else "",
+        ])
+
+    header_fill = PatternFill("solid", fgColor="123B70")
+    for cell in sheet[1]:
+        cell.font = Font(bold=True, color="FFFFFF")
+        cell.fill = header_fill
+        cell.alignment = Alignment(vertical="center")
+    sheet.freeze_panes = "A2"
+    sheet.auto_filter.ref = sheet.dimensions
+    for column, width in {"A": 26, "B": 32, "C": 18, "D": 22, "E": 24, "F": 22, "G": 22}.items():
+        sheet.column_dimensions[column].width = width
+    for cell in sheet["C"][1:]:
+        cell.number_format = '"KSh" #,##0'
+
+    summary = workbook.create_sheet("Finance Summary")
+    verified_total = sum(row.amount for row in records if row.verified)
+    unverified_total = sum(row.amount for row in records if not row.verified)
+    summary.append(["Ushirika Journalism Club — Finance Summary", "Amount (KSh)"])
+    summary.append(["Verified contributions", verified_total])
+    summary.append(["Unverified contributions", unverified_total])
+    summary.append(["Total recorded", verified_total + unverified_total])
+    summary.append([])
+    summary.append(["Payment type", "Verified (KSh)", "Unverified (KSh)", "Records"])
+    payment_types = sorted({row.payment_type or "Other" for row in records})
+    for payment_type in payment_types:
+        matching = [row for row in records if (row.payment_type or "Other") == payment_type]
+        summary.append([
+            safe_text(payment_type),
+            sum(row.amount for row in matching if row.verified),
+            sum(row.amount for row in matching if not row.verified),
+            len(matching),
+        ])
+    for cell in summary[1]:
+        cell.font = Font(bold=True, color="FFFFFF")
+        cell.fill = header_fill
+    for cell in summary[6]:
+        cell.font = Font(bold=True, color="FFFFFF")
+        cell.fill = header_fill
+    summary.column_dimensions["A"].width = 38
+    for column in ("B", "C", "D"):
+        summary.column_dimensions[column].width = 22
+    for row_num in (2, 3, 4):
+        summary.cell(row_num, 2).number_format = '"KSh" #,##0'
+    for row_num in range(7, summary.max_row + 1):
+        summary.cell(row_num, 2).number_format = '"KSh" #,##0'
+        summary.cell(row_num, 3).number_format = '"KSh" #,##0'
+
+    output = io.BytesIO()
+    workbook.save(output)
+    output.seek(0)
+    return Response(
+        output.getvalue(),
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": "attachment; filename=ushirika-finance-report.xlsx"},
+    )
 
 
 @app.route("/dashboard/treasurer/files", methods=["GET", "POST"])
