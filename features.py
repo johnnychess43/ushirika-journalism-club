@@ -8,7 +8,7 @@ from flask_login import current_user, login_required
 from werkzeug.security import generate_password_hash
 
 
-def install(app, db, User, Article, ClubEvent, ForumPost, ROLES):
+def install(app, db, User, Article, ClubEvent, ForumPost, ROLES, limiter=None):
     """Install Ushirika member accounts, Events Manager roles, AI studio, chat and password recovery."""
     MEMBER_ROLE = "member"
     EVENT_MANAGER_ROLE = "events_manager"
