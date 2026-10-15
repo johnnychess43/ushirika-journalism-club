@@ -14,7 +14,7 @@
     <article class="card"><h3>🗣️ Forum</h3><p>Join discussions, ideas and announcements from the club community.</p><a class="btn blue" href="{{ url_for('forums') }}">Open forum</a></article>
     {% if current_user.role in ['developer','patron','assistant_patron','chairperson','vice_chairperson','secretary_general','production_manager','chief_editor','communication_manager'] %}<article class="card"><h3>📣 Publish an event</h3><p>Add an event to the public calendar.</p><a class="btn" href="{{ url_for('new_event') }}">Create event</a></article>{% endif %}
     {% if current_user.role in ['developer','chief_editor','patron','assistant_patron'] %}<article class="card"><h3>📝 Editorial review</h3><p>{{ pending_articles }} article(s) are awaiting review.</p><a class="btn blue" href="{{ url_for('articles') }}">View newsroom</a></article>{% endif %}
-    {% if current_user.role == 'developer' %}<article class="card"><h3>🔐 Developer tools</h3><p>Approve member and leadership account requests and manage club content.</p><a class="btn" href="{{ url_for('admin_users') }}">Manage accounts</a></article>{% endif %}
+    {% if current_user.role == 'developer' %}<article class="card"><h3>🔐 Developer tools</h3><p>Approve member and leadership account requests, manage club content and handle password recovery.</p><a class="btn" href="{{ url_for('admin_users') }}">Manage accounts</a> <a class="btn blue" href="{{ url_for('password_resets') }}">Password recovery</a></article>{% endif %}
   </div>
 </section>
 {% endblock %}
