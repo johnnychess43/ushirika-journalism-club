@@ -6,6 +6,19 @@
   <h1 class="section-title">Welcome, {{ current_user.full_name }}.</h1>
   <p>You are signed in as <span class="pill">{{ ROLES.get(current_user.role, 'Club Member') }}</span>.</p>
   <div class="grid">
+    {% if current_user.role in ['treasurer', 'developer'] %}
+    <article class="card">
+      <h3>💰 Treasurer's Finance Centre</h3>
+      <p>Manage club contributions, verify M-PESA payments, download Excel/CSV reports, store finance documents, and update public payment instructions.</p>
+      <div class="actions">
+        <a class="btn blue" href="{{ url_for('contributions') }}">Contributions &amp; verification</a>
+        <a class="btn" href="{{ url_for('export_contributions_excel') }}">Download Excel report</a>
+        <a class="btn" href="{{ url_for('export_contributions') }}">Download CSV</a>
+        <a class="btn" href="{{ url_for('treasurer_files') }}">Finance files</a>
+        <a class="btn" href="{{ url_for('payment') }}">Payment instructions</a>
+      </div>
+    </article>
+    {% endif %}
     <article class="card"><h3>✍️ Write an article</h3><p>Create a story for the Ushirika newsroom. Editorial roles can review and publish submissions.</p><a class="btn blue" href="{{ url_for('new_article') }}">Write article</a></article>
     <article class="card"><h3>💬 Club Chat</h3><p>Talk with fellow approved club members and leadership in the shared club conversation.</p><a class="btn blue" href="{{ url_for('chat') }}">Open chat</a></article>
     <article class="card"><h3>🤖 AI Event & Poster Studio</h3><p>Plan programmes, publicity, staffing and event copy with the Ushirika AI assistant.</p><a class="btn" href="{{ url_for('ai_studio') }}">Open AI Studio</a></article>
