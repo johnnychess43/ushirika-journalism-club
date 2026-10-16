@@ -47,7 +47,7 @@ try {
             $stmt=db()->prepare('INSERT INTO articles(user_id,title,body) VALUES(?,?,?)'); $stmt->execute([$_SESSION['user_id'],$title,$body]);
             $page='dashboard'; $notice='Article submitted for editorial review.';
         } elseif ($action === 'event') {
-            require_login(); $title=trim($_POST['title']??''); $description=trim($_POST['description']??''); $date=$_POST['event_date']??'';
+            require_login(); $title=trim($_POST['title']??''); $description=trim($_POST['description']??''); $date=str_replace('T',' ',trim($_POST['event_date']??'')); if (strlen($date)===16) $date .= ':00';
             if ($title==='' || $date==='') throw new Exception('Event title and date are required.');
             $stmt=db()->prepare('INSERT INTO events(created_by,title,description,event_date) VALUES(?,?,?,?)'); $stmt->execute([$_SESSION['user_id'],$title,$description,$date]);
             $page='dashboard'; $notice='Event created.';
@@ -58,7 +58,7 @@ try {
             $page='forums'; $notice='Forum post published.';
         }
     }
-} catch (Throwable $ex) { $error=$ex->getMessage(); }
+} catch (PDOException $ex) { error_log('Ushirika database error: '.$ex->getMessage()); $error='The site could not complete that request because of a database connection or query problem. Please try again shortly.'; } catch (Throwable $ex) { $error=$ex->getMessage(); }
 
 function header_html($title) { global $error,$notice; ?>
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0b5d3b"><title><?=e($title)?> · Ushirika Journalism Club</title><link rel="icon" href="favicon.svg"><style>
