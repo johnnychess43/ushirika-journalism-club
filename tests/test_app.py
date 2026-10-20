@@ -95,3 +95,16 @@ def test_developer_tools_are_restricted(client):
     login(client, "dev@example.test", "test-password-long-enough")
     response = client.get("/admin/users")
     assert response.status_code == 200
+
+
+def test_security_headers_are_present(client):
+    response = client.get("/")
+    assert response.headers["X-Content-Type-Options"] == "nosniff"
+    assert response.headers["X-Frame-Options"] == "DENY"
+    assert response.headers["Referrer-Policy"] == "strict-origin-when-cross-origin"
+
+
+def test_login_page_uses_a_valid_recovery_instruction(client):
+    response = client.get("/login")
+    assert response.status_code == 200
+    assert b"Contact a club developer" in response.data
