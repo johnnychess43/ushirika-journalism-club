@@ -104,7 +104,7 @@ def test_security_headers_are_present(client):
     assert response.headers["Referrer-Policy"] == "strict-origin-when-cross-origin"
 
 
-def test_feature_health_does_not_claim_email_delivery(client):
-    response = client.get("/health/features")
+def test_login_page_uses_a_valid_recovery_instruction(client):
+    response = client.get("/login")
     assert response.status_code == 200
-    assert "password-recovery-no-email" in response.json["features"]
+    assert b"Contact a club developer" in response.data
